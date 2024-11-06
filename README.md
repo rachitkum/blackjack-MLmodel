@@ -9,9 +9,6 @@ This project is a Blackjack game powered by an ML model that suggests moves for 
 - [Usage](#usage)
 - [Model Details](#model-details)
 - [Technologies Used](#technologies-used)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## Features
 - **Interactive Blackjack Game**: Play Blackjack in the browser using JavaScript.
 - **ML-Powered Move Suggestions**: The ML model suggests the optimal move (`Hit`, `Stand`, `Split`, `Double Down`) for the player based on the current game state.
