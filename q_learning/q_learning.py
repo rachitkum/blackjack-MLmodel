@@ -1,32 +1,35 @@
+# q_learning/q_learning.py
+import pickle
 import random
 
 class QLearningAgent:
-    def __init__(self, actions=['hit', 'stand'], learning_rate=0.1, discount_factor=0.9, exploration_rate=0.1):
-        self.actions = actions  # List of actions
-        self.learning_rate = learning_rate  # Learning rate (alpha)
-        self.discount_factor = discount_factor  # Discount factor (gamma)
-        self.exploration_rate = exploration_rate  # Exploration rate (epsilon)
-        self.q_values = {}  # Dictionary to store Q-values
+    def __init__(self, alpha=0.1, gamma=0.9, epsilon=0.1):
+        self.alpha = alpha  # Learning rate
+        self.gamma = gamma  # Discount factor
+        self.epsilon = epsilon  # Exploration rate
+        self.q_table = {}
 
     def get_best_action(self, state):
-        """Selects the best action based on Q-values for the given state."""
-        if state not in self.q_values:
-            self.q_values[state] = {action: 0.0 for action in self.actions}  # Initialize Q-values for state if not present
-
-        if random.uniform(0, 1) < self.exploration_rate:
-            # Exploration: choose a random action
-            return random.choice(self.actions)
-        else:
-            # Exploitation: choose the best action based on Q-values
-            return max(self.q_values[state], key=self.q_values[state].get)
+        """Get the best action for the current state."""
+        if state not in self.q_table or random.random() < self.epsilon:
+            return random.choice(['hit', 'stand'])
+        return max(self.q_table[state], key=self.q_table[state].get)
 
     def update_q_values(self, state, action, reward, next_state):
-        """Updates Q-values based on the Q-learning update rule."""
-        if state not in self.q_values:
-            self.q_values[state] = {action: 0.0 for action in self.actions}
-        if next_state not in self.q_values:
-            self.q_values[next_state] = {action: 0.0 for action in self.actions}
+        """Update Q-values using the Q-learning formula."""
+        if state not in self.q_table:
+            self.q_table[state] = {'hit': 0, 'stand': 0}
 
-        # Q-learning formula
-        best_next_action = max(self.q_values[next_state], key=self.q_values[next_state].get)
-        self.q_values[state][action] += self.learning_rate * (reward + self.discount_factor * self.q_values[next_state][best_next_action] - self.q_values[state][action])
+        max_next_q = max(self.q_table[next_state].values()) if next_state in self.q_table else 0
+        self.q_table[state][action] += self.alpha * (reward + self.gamma * max_next_q - self.q_table[state][action])
+
+    def save(self, filename):
+        """Save the Q-learning agent to a file."""
+        with open(filename, 'wb') as file:
+            pickle.dump(self, file)
+
+    @staticmethod
+    def load(filename):
+        """Load the Q-learning agent from a file."""
+        with open(filename, 'rb') as file:
+            return pickle.load(file)

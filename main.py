@@ -1,57 +1,36 @@
-import pandas as pd
+# main.py
 from q_learning.q_learning import QLearningAgent
 from game.blackjack_game import BlackjackGame
 
-def train_agent(data, episodes=1000):
-    # Initialize the Q-learning agent
-    q_learning_agent = QLearningAgent()
+def main():
+    agent = QLearningAgent.load('saved_models/q_learning_agent.pkl')
 
-    for episode in range(episodes):
-        # Reset the game environment before each episode
+    while True:
         game = BlackjackGame()
         game.reset()
 
-        # Randomly sample a row from the dataset
-        sample = data.sample(n=1).iloc[0]
-        
-        # Extract relevant features from the sample
-        player_sum = sample['sumofcards']
-        dealer_sum = sample['sumofdeal']
-        game_outcome = sample['winloss']  # Can also use 'plybustbeat' and 'dlbustbeat'
-        
-        # Initialize the state (current game state)
-        state = (player_sum, dealer_sum)
-        
-        # Choose an action using Q-learning agent
-        action = q_learning_agent.get_best_action(state)
-        
-        # Perform the action and simulate the result
-        game.step(action)
-        
-        # Get the next state after taking the action
-        next_state = (game.player_total, game.dealer_total)
-        
-        # Reward based on the outcome
-        if game_outcome == 1:  # Player wins
-            reward = 1
-        elif game_outcome == -1:  # Dealer wins
-            reward = -1
-        else:  # Tie
-            reward = 0
-        
-        # Update Q-values using the Q-learning update rule
-        q_learning_agent.update_q_values(state, action, reward, next_state)
-    
-    return q_learning_agent
+        print("--- New Round ---")
+        while True:
+            print(f"Dealer's Visible Card: {game.dealer_hand[0]}")
+            print(f"Your Hand: {game.player_hand} | Total: {game.player_total}")
 
-# Load the dataset
-data = pd.read_csv('data/blkjckhands.csv')
+            state = (game.player_total, game.dealer_hand[0])
+            suggestion = agent.get_best_action(state)
+            print(f"Suggested Action: {suggestion}")
 
-# Train the Q-learning agent
-trained_agent = train_agent(data)
+            action = input("Choose 'hit' or 'stand' (or 'quit' to exit): ").strip().lower()
+            if action == 'quit':
+                print("Thanks for playing!")
+                return
 
-# Example of how to use the trained agent to predict the next move
-# Sample state (e.g., player sum: 15, dealer sum: 10)
-state = (15, 10)
-action = trained_agent.get_best_action(state)
-print(f"Recommended action: {action}")
+            game.step(action)
+
+            if game.player_total > 21 or action == 'stand':
+                break
+
+        print(f"Your Hand: {game.player_hand} | Total: {game.player_total}")
+        print(f"Dealer's Final Hand: {game.dealer_hand} | Total: {game.dealer_total}")
+        print(f"Outcome: {game.result()}\n")
+
+if __name__ == "__main__":
+    main()
